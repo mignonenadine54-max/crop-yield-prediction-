@@ -14,7 +14,7 @@ model = pickle.load(open('25RP18835.sav', 'rb'))
 
 # --- App Header ---
 st.title("🌾 Crop Yield Prediction App")
-st.write("Developed by *NIYORUFATIRO Benjamin*")
+st.write("Developed by *IMANISHIMWE Nadine*")
 st.write("Fill in your crop and environmental details below to estimate yield:")
 
 # --- User Inputs ---
@@ -53,3 +53,4 @@ input_data = pd.DataFrame([encoded_data])
 if st.button("🔍 Predict Crop Yield"):
     prediction = model.predict(input_data)
     st.success(f"🌾 predicted Yield in tons per hectare is: {prediction[0]:.2f}")
+
