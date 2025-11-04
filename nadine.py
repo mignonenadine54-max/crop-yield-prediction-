@@ -1,65 +1,55 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Nov  4 23:31:14 2025
+
+@author: MIND-HACKER
+"""
+
 import streamlit as st
-import pickle
 import pandas as pd
-import numpy as np
+import pickle
 
-# --- Load model ---
-with open('25RP18835.sav', 'rb') as file:
-    model = pickle.load(file)
+# --- Load trained model ---
+model = pickle.load(open('25RP18835.sav', 'rb'))
 
+# --- App Header ---
 st.title("🌾 Crop Yield Prediction App")
-st.write("Predict crop yield based on regional and environmental conditions.")
+st.write("Developed by *NIYORUFATIRO Benjamin*")
+st.write("Fill in your crop and environmental details below to estimate yield:")
 
-st.sidebar.header("Enter Input Features")
+# --- User Inputs ---
+Region = st.selectbox("Select Region", ["North", "South", "East", "West"])
+Soil_Type = st.selectbox("Select Soil Type", ["Sandy", "Clay", "Loam", "Silt", "Peaty", "Chalky"])
+Crop = st.selectbox("Select Crop", ["Cotton", "Rice", "Barley", "Soybean", "Wheat", "Maize"])
+Rainfall_mm = st.number_input("🌧️ Rainfall (mm)", min_value=0.0, step=0.1)
+Temperature_Celsius = st.number_input("🌡️ Temperature (°C)", min_value=-10.0, step=0.1)
+Fertilizer_Used = st.selectbox("Fertilizer Used", ["TRUE", "FALSE"])
+Irrigation_Used = st.selectbox("Irrigation Used", ["TRUE", "FALSE"])
+Weather_Condition = st.selectbox("Weather Condition", ["Sunny", "Rainy", "Cloudy"])
+Days_to_Harvest = st.number_input("Days to Harvest", min_value=0, step=1)
 
-# --- Input options ---
-regions = ['North', 'South', 'East', 'West']
-soil_types = ['Sandy', 'Clay', 'Loam', 'Silt', 'Peaty']
-crops = ['Rice', 'Wheat', 'Maize', 'Cotton', 'Barley', 'Soybean']
-weather_conditions = ['Sunny', 'Rainy', 'Cloudy']
+# --- Encoding for categorical variables ---
+region_map = {"North": 0, "South": 1, "East": 2, "West": 3}
+soil_map = {"Sandy": 0, "Clay": 1, "Loam": 2, "Silt": 3, "Peaty": 4, "Chalky": 5}
+crop_map = {"Cotton": 0, "Rice": 1, "Barley": 2, "Soybean": 3, "Wheat": 4, "Maize": 5}
+weather_map = {"Sunny": 0, "Rainy": 1, "Cloudy": 2}
 
-# --- Sidebar Inputs ---
-region = st.sidebar.selectbox("Region", regions)
-soil_type = st.sidebar.selectbox("Soil Type", soil_types)
-crop = st.sidebar.selectbox("Crop", crops)
-rainfall = st.sidebar.number_input("Rainfall (mm)", min_value=0.0, step=0.1)
-temperature = st.sidebar.number_input("Temperature (°C)", min_value=-10.0, step=0.1)
-days_to_harvest = st.sidebar.number_input("Days to Harvest", min_value=1, step=1)
-fertilizer_used = st.sidebar.selectbox("Fertilizer Used", ['Yes', 'No'])
-irrigation_used = st.sidebar.selectbox("Irrigation Used", ['Yes', 'No'])
-weather_condition = st.sidebar.selectbox("Weather Condition", weather_conditions)
+# --- Prepare input data ---
+encoded_data = {
+    'Region': region_map[Region],
+    'Soil_Type': soil_map[Soil_Type],
+    'Crop': crop_map[Crop],
+    'Rainfall_mm': Rainfall_mm,
+    'Temperature_Celsius': Temperature_Celsius,
+    'Fertilizer_Used': 1 if Fertilizer_Used == "TRUE" else 0,
+    'Irrigation_Used': 1 if Irrigation_Used == "TRUE" else 0,
+    'Weather_Condition': weather_map[Weather_Condition],
+    'Days_to_Harvest': Days_to_Harvest
+}
 
-# --- Encoding mappings (must match your training preprocessing) ---
-region_map = {'North': 0, 'South': 1, 'East': 2, 'West': 3}
-soil_map = {'Sandy': 0, 'Clay': 1, 'Loam': 2, 'Silt': 3, 'Peaty': 4}
-crop_map = {'Rice': 0, 'Wheat': 1, 'Maize': 2, 'Cotton': 3, 'Barley': 4, 'Soybean': 5}
-weather_map = {'Sunny': 0, 'Rainy': 1, 'Cloudy': 2}
+input_data = pd.DataFrame([encoded_data])
 
-# --- Prepare input ---
-input_data = pd.DataFrame({
-    'Region': [region_map[region]],
-    'Soil_Type': [soil_map[soil_type]],
-    'Crop': [crop_map[crop]],
-    'Rainfall_mm': [rainfall],
-    'Temperature_Celsius': [temperature],
-    'Fertilizer_Used': [1 if fertilizer_used == 'Yes' else 0],
-    'Irrigation_Used': [1 if irrigation_used == 'Yes' else 0],
-    'Weather_Condition': [weather_map[weather_condition]],
-    'Days_to_Harvest': [days_to_harvest]
-})
-
-# --- Predict ---
-if st.button("Predict Yield"):
-    try:
-        prediction = model.predict(input_data)
-
-        # Ensure scalar output for formatting
-        if isinstance(prediction, (np.ndarray, list)):
-            prediction_value = float(np.squeeze(prediction))
-        else:
-            prediction_value = float(prediction)
-
-        st.success(f"🌾 Estimated Crop Yield: **{prediction_value:.2f} tons per hectare**")
-    except Exception as e:
-        st.error(f"Prediction failed: {e}")
-        st.info("💡 Make sure your model expects numeric encoded features or uses a preprocessing pipeline.")
+# --- Prediction ---
+if st.button("🔍 Predict Crop Yield"):
+    prediction = model.predict(input_data)
+    st.success(f"🌾 predicted Yield in tons per hectare is: {prediction[0]:.2f}")
