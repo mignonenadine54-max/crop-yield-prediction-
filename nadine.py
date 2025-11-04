@@ -8,6 +8,7 @@ Created on Tue Nov  4 23:31:14 2025
 import streamlit as st
 import pandas as pd
 import pickle
+import numpy as np
 
 # --- Load trained model ---
 model = pickle.load(open('25RP18835.sav', 'rb'))
@@ -51,6 +52,16 @@ input_data = pd.DataFrame([encoded_data])
 
 # --- Prediction ---
 if st.button("🔍 Predict Crop Yield"):
-    prediction = model.predict(input_data)
-    st.success(f"🌾 predicted Yield in tons per hectare is: {prediction[0]:.2f}")
+    try:
+        prediction = model.predict(input_data)
 
+        # Safely extract scalar value
+        if isinstance(prediction, (np.ndarray, list)):
+            prediction_value = float(np.squeeze(prediction))
+        else:
+            prediction_value = float(prediction)
+
+        st.success(f"🌾 Predicted Yield in tons per hectare: **{prediction_value:.2f}**")
+
+    except Exception as e:
+        st.error(f"Prediction failed: {e}")
